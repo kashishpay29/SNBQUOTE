@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNB Engg. — Quotation Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C0392B;--red2:#E74C3C;--navy:#1A1A2E;--dark:#2C2C2C;
+  --gray:#6B7280;--lgray:#E5E7EB;--offwhite:#F9FAFB;--white:#fff;
+  --body:'Inter',sans-serif;--display:'Barlow Condensed',sans-serif;
+}
+body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-height:100vh}
+
+/* ── APP LAYOUT ── */
+.app{display:grid;grid-template-columns:420px 1fr;min-height:100vh;gap:0}
+.form-panel{background:var(--white);border-right:1px solid var(--lgray);overflow-y:auto;height:100vh;position:sticky;top:0}
+.preview-panel{padding:24px;background:#E8EAED;overflow-y:auto;min-height:100vh}
+
+/* ── FORM PANEL ── */
+.panel-header{background:var(--red);padding:20px 24px;position:sticky;top:0;z-index:10}
+.panel-header h1{font-family:var(--display);font-size:22px;font-weight:800;color:var(--white);letter-spacing:0.04em}
+.panel-header p{font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px}
+.form-body{padding:20px 24px}
+.form-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--lgray)}
+.form-section:last-child{border-bottom:none}
+.section-title{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.section-title::before{content:'';width:16px;height:2px;background:var(--red)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field-row.single{grid-template-columns:1fr}
+.field-row.triple{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.06em}
+.field input,.field textarea,.field select{padding:7px 10px;border:1px solid var(--lgray);border-radius:4px;font-family:var(--body);font-size:13px;color:var(--dark);background:var(--white);outline:none;transition:border-color 0.15s;-webkit-appearance:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--red)}
+.field textarea{resize:vertical;min-height:60px}
+
+/* ── ITEMS TABLE ── */
+.items-section{margin-bottom:20px}
+.items-head{display:grid;grid-template-columns:24px 1fr 70px 50px 50px 80px 55px 55px 80px 32px;gap:4px;padding:6px 8px;background:var(--dark);border-radius:4px 4px 0 0}
+.items-head span{font-size:9px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.05em}
+.item-row{display:grid;grid-template-columns:24px 1fr 70px 50px 50px 80px 55px 55px 80px 32px;gap:4px;padding:4px 8px;background:var(--white);border:1px solid var(--lgray);border-top:none;align-items:start}
+.item-row:last-child{border-radius:0 0 4px 4px}
+.item-num{font-size:11px;font-weight:700;color:var(--red);padding-top:8px;text-align:center}
+.item-row input,.item-row textarea{padding:5px 6px;border:1px solid var(--lgray);border-radius:3px;font-family:var(--body);font-size:11px;color:var(--dark);width:100%;outline:none;background:var(--offwhite)}
+.item-row input:focus,.item-row textarea:focus{border-color:var(--red);background:var(--white)}
+.item-row textarea{resize:vertical;min-height:52px}
+.item-total{font-size:11px;font-weight:700;color:var(--dark);padding-top:8px;text-align:right}
+.del-btn{background:none;border:none;color:var(--lgray);cursor:pointer;font-size:16px;padding-top:6px;transition:color 0.15s;text-align:center}
+.del-btn:hover{color:var(--red)}
+.add-item-btn{width:100%;padding:8px;background:var(--offwhite);border:1px dashed var(--lgray);border-top:none;border-radius:0 0 4px 4px;font-family:var(--body);font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all 0.15s}
+.add-item-btn:hover{background:var(--lgray);color:var(--dark)}
+
+/* ── ACTIONS ── */
+.actions{padding:16px 24px;background:var(--offwhite);border-top:1px solid var(--lgray);position:sticky;bottom:0;display:flex;gap:10px}
+.btn-primary{flex:1;padding:11px;background:var(--red);color:var(--white);border:none;border-radius:4px;font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:0.06em;cursor:pointer;text-transform:uppercase;transition:background 0.15s}
+.btn-primary:hover{background:var(--red2)}
+.btn-secondary{padding:11px 16px;background:var(--white);color:var(--dark);border:1px solid var(--lgray);border-radius:4px;font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-secondary:hover{border-color:var(--dark)}
+
+/* ── PREVIEW PANEL ── */
+.preview-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.preview-toolbar h2{font-size:14px;font-weight:600;color:var(--gray)}
+.preview-scale{font-size:12px;color:var(--gray)}
+.pdf-page{background:var(--white);width:794px;min-height:1123px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.15);position:relative;font-family:var(--body)}
+
+/* ══════════════════════════════
+   PDF PAGE STYLES (print-exact)
+══════════════════════════════ */
+.pdf-header{padding:28px 36px 20px;display:grid;grid-template-columns:140px 1fr 200px;gap:20px;align-items:start;border-bottom:3px solid var(--red)}
+.pdf-logo{width:120px;height:auto;object-fit:contain}
+.pdf-company h2{font-family:var(--display);font-size:36px;font-weight:800;color:var(--red);letter-spacing:0.05em;line-height:1}
+.pdf-company-info{margin-top:10px}
+.pdf-company-info p{font-size:11px;color:var(--gray);line-height:1.6}
+.pdf-gst{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:11px}
+.pdf-gst span:first-child{color:var(--gray)}
+.pdf-gst span:last-child{font-weight:700;color:var(--red)}
+.pdf-copies{display:flex;flex-direction:column;gap:6px;padding-top:8px}
+.pdf-copy-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--gray)}
+.pdf-copy-item::before{content:'';width:14px;height:14px;border:1.5px solid var(--red);border-radius:50%;flex-shrink:0;background:var(--white)}
+
+.pdf-title-row{padding:16px 36px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--lgray)}
+.pdf-doc-title{display:flex;align-items:center;gap:10px}
+.pdf-doc-icon{width:28px;height:28px;background:var(--offwhite);border:1.5px solid var(--lgray);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.pdf-doc-title h3{font-family:var(--display);font-size:28px;font-weight:800;color:var(--dark);letter-spacing:0.04em}
+.pdf-quote-meta{text-align:right}
+.pdf-quote-meta p{font-size:12px;color:var(--dark);line-height:1.8}
+.pdf-quote-meta strong{font-weight:700}
+
+.pdf-addresses{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 36px;border-bottom:1px solid var(--lgray)}
+.pdf-address-box{border:1px solid var(--lgray);border-radius:6px;padding:12px 14px}
+.pdf-address-label{font-size:9px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:6px}
+.pdf-address-box strong{font-size:13px;color:var(--dark);display:block;margin-bottom:3px}
+.pdf-address-box p{font-size:11px;color:var(--gray);line-height:1.6}
+
+.pdf-items{padding:0 36px 16px}
+.pdf-items-table{width:100%;border-collapse:collapse;margin-top:12px}
+.pdf-items-table th{padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);border-bottom:1.5px solid var(--lgray);white-space:nowrap}
+.pdf-items-table th.right,.pdf-items-table td.right{text-align:right}
+.pdf-items-table td{padding:10px 10px;font-size:11px;color:var(--dark);border-bottom:1px solid var(--lgray);vertical-align:top}
+.pdf-items-table td.item-num{font-weight:700;color:var(--dark);white-space:nowrap}
+.pdf-items-table td.desc{font-size:11px;line-height:1.5}
+.pdf-items-table td.total-cell{font-weight:700;white-space:nowrap}
+
+.pdf-totals{display:flex;justify-content:flex-end;padding:0 36px 20px}
+.pdf-totals-box{width:260px}
+.totals-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px}
+.totals-row.subtotal{border-top:1px solid var(--lgray);padding-top:8px;color:var(--dark)}
+.totals-row.gst{color:var(--dark)}
+.totals-row.grand{border-top:2px solid var(--dark);border-bottom:2px solid var(--dark);padding:8px 0;margin-top:4px}
+.totals-row.grand span:first-child{font-size:14px;font-weight:700;color:var(--gray)}
+.totals-row.grand span:last-child{font-size:18px;font-weight:800;color:var(--dark)}
+.totals-row strong{font-weight:600}
+
+.pdf-notes-terms{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 36px 20px}
+.pdf-notes h4,.pdf-terms h4{font-size:11px;font-weight:700;color:var(--red);margin-bottom:8px}
+.pdf-notes ul{padding-left:14px}
+.pdf-notes ul li{font-size:10px;color:var(--dark);line-height:1.7;margin-bottom:2px}
+.pdf-terms table{width:100%;border-collapse:collapse;border:1px solid var(--lgray);border-radius:6px;overflow:hidden}
+.pdf-terms table td{padding:6px 10px;font-size:10px;border-bottom:1px solid var(--lgray)}
+.pdf-terms table tr:last-child td{border-bottom:none}
+.pdf-terms table td:first-child{font-weight:600;color:var(--dark);width:110px;background:var(--offwhite)}
+.pdf-terms table td:last-child{color:var(--gray)}
+
+.pdf-footer{padding:16px 36px 20px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--lgray);margin-top:8px}
+.pdf-footer-left{font-size:11px;color:var(--gray);max-width:380px;line-height:1.5}
+.pdf-footer-right{text-align:right}
+.pdf-footer-right p{font-size:12px;font-weight:700;color:var(--dark);margin-bottom:32px}
+.pdf-sig-line{width:160px;height:1px;background:var(--dark);margin:0 0 4px auto}
+.pdf-footer-right span{font-size:10px;color:var(--gray)}
+
+@media(max-width:1300px){
+  .app{grid-template-columns:380px 1fr}
+  .pdf-page{width:700px;transform:scale(0.9);transform-origin:top center;margin-bottom:-112px}
+}
+@media print{
+  .form-panel,.preview-toolbar,.actions{display:none}
+  .preview-panel{padding:0;background:white}
+  .pdf-page{box-shadow:none;width:100%;margin:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ FORM PANEL ══ -->
+<div class="form-panel">
+  <div class="panel-header">
+    <h1>SNB ENGG. Quotation</h1>
+    <p>Fill in the details — preview updates live</p>
+  </div>
+  <div class="form-body">
+
+    <!-- Quote Meta -->
+    <div class="form-section">
+      <div class="section-title">Quote Details</div>
+      <div class="field-row">
+        <div class="field"><label>Quote No.</label><input id="quoteNo" value="SNB/Q/2026-06/014" oninput="render()"></div>
+        <div class="field"><label>Date</label><input id="quoteDate" type="date" oninput="render()"></div>
+      </div>
+    </div>
+
+    <!-- Bill To -->
+    <div class="form-section">
+      <div class="section-title">Bill To (Customer)</div>
+      <div class="field-row single">
+        <div class="field"><label>Company Name</label><input id="billName" placeholder="M/s. Customer Name" oninput="render()"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Address Line 1</label><input id="billAddr1" placeholder="Address Line 1" oninput="render()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>City, State</label><input id="billCity" placeholder="City, State" oninput="render()"></div>
+        <div class="field"><label>PIN</label><input id="billPin" placeholder="400001" oninput="render()"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>GSTIN</label><input id="billGst" placeholder="GSTIN" oninput="render()"></div>
+      </div>
+    </div>
+
+    <!-- Ship To -->
+    <div class="form-section">
+      <div class="section-title">Ship To (Site)</div>
+      <div class="field-row single">
+        <div class="field"><label>Site / Project Name</label><input id="shipName" placeholder="Site / Project Name" oninput="render()"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Site Address</label><input id="shipAddr1" placeholder="Site Address Line 1" oninput="render()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>City, State</label><input id="shipCity" placeholder="City, State" oninput="render()"></div>
+        <div class="field"><label>PIN</label><input id="shipPin" placeholder="PIN" oninput="render()"></div>
+      </div>
+      <div class="field-row single">
+        <div class="field"><label>Contact</label><input id="shipContact" placeholder="+91 XXXXX XXXXX" oninput="render()"></div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="form-section items-section">
+      <div class="section-title">Line Items</div>
+      <div class="items-head">
+        <span>#</span><span>Description</span><span>HSN/SAC</span>
+        <span>Qty</span><span>Unit</span><span>Unit Cost</span>
+        <span>Disc %</span><span>GST %</span><span>Total</span><span></span>
+      </div>
+      <div id="itemsContainer"></div>
+      <button class="add-item-btn" onclick="addItem()">+ Add Line Item</button>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-section">
+      <div class="section-title">Notes & Scope</div>
+      <div class="field-row single">
+        <div class="field">
+          <label>Notes (one per line)</label>
+          <textarea id="notes" rows="5" placeholder="If installation is required, charges will be extra.&#10;Excluded: local stamping, cable conduit laying..." oninput="render()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="form-section">
+      <div class="section-title">Terms & Conditions</div>
+      <div class="field-row">
+        <div class="field"><label>Packing & Forwarding</label><input id="tPacking" value="Inclusive" oninput="render()"></div>
+        <div class="field"><label>Freight</label><input id="tFreight" value="Extra at actuals" oninput="render()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Delivery</label><input id="tDelivery" value="Within 2-3 weeks from PO + advance" oninput="render()"></div>
+        <div class="field"><label>Payment</label><input id="tPayment" value="100% advance along with order" oninput="render()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Validity</label><input id="tValidity" value="30 days from date of quote" oninput="render()"></div>
+        <div class="field"><label>Warranty</label><input id="tWarranty" value="12 months from date of supply" oninput="render()"></div>
+      </div>
+    </div>
+
+    <!-- Footer message -->
+    <div class="form-section">
+      <div class="section-title">Footer Message</div>
+      <div class="field-row single">
+        <div class="field">
+          <textarea id="footerMsg" rows="2" oninput="render()">We assure you our prompt attention to all your requirements.</textarea>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-body -->
+  <div class="actions">
+    <button class="btn-secondary" onclick="resetForm()">Reset</button>
+    <button class="btn-primary" onclick="downloadPDF()">⬇ Download PDF</button>
+  </div>
+</div><!-- /form-panel -->
+
+<!-- ══ PREVIEW PANEL ══ -->
+<div class="preview-panel">
+  <div class="preview-toolbar">
+    <h2>Live Preview</h2>
+    <span class="preview-scale">A4 Portrait</span>
+  </div>
+  <div id="pdfPreview" class="pdf-page"></div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAQFBQkGCQkJCQkKCAkICgsLCgoLCwwKCwoLCgwMDAwNDQwMDAwMDw4PDAwNDw8PDw0OERERDhEQEBETERMREQ0BBAQECAYIBwgIBwgGCAYICAgHBwgICQcHBwcHCQoJCAgICAkKCQgIBggICQkJCgoJCQoICQgKCgoKCg4QDg4Od//CABEIAOAA4AMBIgACEQEDEQH/xACxAAEAAgMBAAAAAAAAAAAAAAAAAgUBAwQGEAABAgMEBAoIBQUAAAAAAAACAxIAAQQFEyJCETJSggYUISMwNGJyorIQFSAxUFSSkyQzU1VjJcLS4vARAAECAwQIBQMDBQAAAAAAAAEAAgMEERITIXEQFDEyQEJRUgUgIkGBM5GhMGFwI0NQssESAAECAwYHAAMBAQAAAAAAAAEAESExYRBBUXGR8CBAgaGx4fEwcNFQwf/aAAwDAQACAAMBAAACrxWejAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcfZWbNGM9/NPVpbmY6W6TPJbVllDZr21FtiWRr3gAAAAAAKyzrNvPPbq7Mwg3tfRo4bWt2aG/RiWrns+TrZ6Bz9wAAAAAACss6zbzz6nHmFgr2JWFdmUoQ7uGyxKlua6zA09QAAAAAACss6zbz2Y17wxkCssq2w281daVdoBq6QAAAAAAFZZ1m3nsxr3hjIFZGdjv4ozNPYGMgAAAAAAKyxrdvNaKzBaKsWirErGr3yh3DR2AAAAACwzCvd3CHoKqUOQv8ZoFvUJC2KlZVoXnBmHEXGJU7p5sSLjhzDlEdoACxrsyh6Lzkoo9tx5tKGPU+WnjN75/OMSXlHlm5pZwY6r3zKUMej85nE7ujlHGfRaaTMtMRr6gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACAAMBAAAh++++++++++++++++++++++++++++++++++++++++++++++5mNMu5++++++++oX+qHe++++++++oV/up0++++++++oV+++9++++++++oV++38++++++++iW//ABPvvvvvv/8ADvzjzzn3L7763b3tf5cWxav77777777777777777777777777777777777777777777/2gAMAwEAAgADAQAAEAAAAAAAAAAA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";
+const GSTIN = "27HEKPS1128L1ZY";
+
+let items = [
+  {desc:'', hsn:'', qty:'1', unit:'Nos', unitCost:'', disc:'0', gst:'18'},
+];
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Set today date
+  const today = new Date();
+  document.getElementById('quoteDate').value = today.toISOString().split('T')[0];
+  renderItemRows();
+  render();
+});
+
+// ── Item management ───────────────────────────────────────────────────────────
+function addItem() {
+  items.push({desc:'', hsn:'', qty:'1', unit:'Nos', unitCost:'', disc:'0', gst:'18'});
+  renderItemRows();
+  render();
+}
+
+function removeItem(i) {
+  if (items.length === 1) return;
+  items.splice(i,1);
+  renderItemRows();
+  render();
+}
+
+function renderItemRows() {
+  const container = document.getElementById('itemsContainer');
+  container.innerHTML = items.map((item, i) => `
+    <div class="item-row" id="row-${i}">
+      <div class="item-num">${i+1}</div>
+      <textarea placeholder="Item description..." oninput="updateItem(${i},'desc',this.value)">${item.desc}</textarea>
+      <input placeholder="HSN" value="${item.hsn}" oninput="updateItem(${i},'hsn',this.value)">
+      <input type="number" placeholder="1" value="${item.qty}" oninput="updateItem(${i},'qty',this.value)">
+      <input placeholder="Nos" value="${item.unit}" oninput="updateItem(${i},'unit',this.value)">
+      <input type="number" placeholder="0.00" value="${item.unitCost}" oninput="updateItem(${i},'unitCost',this.value)">
+      <input type="number" placeholder="0" value="${item.disc}" oninput="updateItem(${i},'disc',this.value)">
+      <input type="number" placeholder="18" value="${item.gst}" oninput="updateItem(${i},'gst',this.value)">
+      <div class="item-total">${calcItemTotal(item)}</div>
+      <button class="del-btn" onclick="removeItem(${i})" title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+function updateItem(i, field, val) {
+  items[i][field] = val;
+  // Update just the total cell
+  const row = document.getElementById('row-'+i);
+  if (row) row.querySelector('.item-total').textContent = calcItemTotal(items[i]);
+  render();
+}
+
+function calcItemTotal(item) {
+  const qty = parseFloat(item.qty) || 0;
+  const uc  = parseFloat(item.unitCost) || 0;
+  const disc= parseFloat(item.disc) || 0;
+  const gst = parseFloat(item.gst) || 0;
+  const base = qty * uc * (1 - disc/100);
+  const total = base * (1 + gst/100);
+  if (!total) return '';
+  return '₹ ' + total.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function calcTotals() {
+  let subtotal = 0, gstAmount = 0;
+  items.forEach(item => {
+    const qty = parseFloat(item.qty)||0, uc=parseFloat(item.unitCost)||0;
+    const disc=parseFloat(item.disc)||0, gst=parseFloat(item.gst)||0;
+    const base = qty*uc*(1-disc/100);
+    subtotal += base;
+    gstAmount += base * gst/100;
+  });
+  return {subtotal, gstAmount, grand: subtotal+gstAmount};
+}
+
+// ── Render preview ────────────────────────────────────────────────────────────
+function g(id) { return document.getElementById(id)?.value || ''; }
+
+function fmt(n) {
+  if (!n) return '—';
+  return '₹ ' + n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd} / ${m} / ${y}`;
+}
+
+function render() {
+  const totals = calcTotals();
+  const notes = g('notes').split('\n').filter(l=>l.trim());
+
+  // Build gst breakdown
+  const gstGroups = {};
+  items.forEach(item => {
+    const gst = parseFloat(item.gst)||0;
+    const qty = parseFloat(item.qty)||0, uc=parseFloat(item.unitCost)||0;
+    const disc=parseFloat(item.disc)||0;
+    const base = qty*uc*(1-disc/100);
+    if (!gstGroups[gst]) gstGroups[gst]=0;
+    gstGroups[gst] += base*gst/100;
+  });
+
+  const gstRows = Object.entries(gstGroups).map(([rate,amt]) =>
+    `<div class="totals-row gst"><span>GST (${rate}%)</span><span>${fmt(amt)}</span></div>`
+  ).join('');
+
+  document.getElementById('pdfPreview').innerHTML = `
+    <!-- HEADER -->
+    <div class="pdf-header">
+      <img src="${LOGO}" class="pdf-logo" alt="SNB ENGG">
+      <div class="pdf-company">
+        <h2>SNB ENGG.</h2>
+        <div class="pdf-company-info">
+          <p><strong>SNB Engg.</strong><br>
+          Office No: C-002, Shree Samriddhi Bldg<br>
+          Behind Happy Home Heights, Poonam Garden<br>
+          S.K. Stone, Mira Road (East) — 401107</p>
+          <div class="pdf-gst">
+            <span>GST</span>
+            <span>${GSTIN}</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="pdf-copies">
+          <div class="pdf-copy-item">Original for Recipient</div>
+          <div class="pdf-copy-item">Duplicate for Supplier/Transporter</div>
+          <div class="pdf-copy-item">Triplicate for Supplier</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TITLE ROW -->
+    <div class="pdf-title-row">
+      <div class="pdf-doc-title">
+        <div class="pdf-doc-icon">📋</div>
+        <h3>QUOTATION</h3>
+      </div>
+      <div class="pdf-quote-meta">
+        <p><strong>Quote No:</strong> ${g('quoteNo') || '—'}</p>
+        <p><strong>Date:</strong> ${fmtDate(g('quoteDate'))}</p>
+      </div>
+    </div>
+
+    <!-- ADDRESSES -->
+    <div class="pdf-addresses">
+      <div class="pdf-address-box">
+        <div class="pdf-address-label">Bill To</div>
+        <strong>${g('billName') || 'M/s. Customer Name'}</strong>
+        <p>${[g('billAddr1'),g('billCity')+(g('billPin')?(' — '+g('billPin')):'')].filter(Boolean).join('<br>')}</p>
+        ${g('billGst')?`<p style="margin-top:4px;font-size:10px;font-weight:600;color:var(--dark)">GSTIN: ${g('billGst')}</p>`:''}
+      </div>
+      <div class="pdf-address-box">
+        <div class="pdf-address-label">Ship To</div>
+        <strong>${g('shipName') || 'Site / Project Name'}</strong>
+        <p>${[g('shipAddr1'),g('shipCity')+(g('shipPin')?(' — '+g('shipPin')):'')].filter(Boolean).join('<br>')}</p>
+        ${g('shipContact')?`<p style="margin-top:4px;font-size:10px">Contact: ${g('shipContact')}</p>`:''}
+      </div>
+    </div>
+
+    <!-- ITEMS TABLE -->
+    <div class="pdf-items">
+      <table class="pdf-items-table">
+        <thead>
+          <tr>
+            <th style="width:30px">S.No</th>
+            <th>Item Description</th>
+            <th style="width:65px">HSN/SAC</th>
+            <th style="width:35px" class="right">Qty</th>
+            <th style="width:40px">Unit</th>
+            <th style="width:90px" class="right">Unit Cost (₹)</th>
+            <th style="width:45px" class="right">Disc %</th>
+            <th style="width:45px" class="right">GST %</th>
+            <th style="width:95px" class="right">Total (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((item,i) => {
+            const qty=parseFloat(item.qty)||0, uc=parseFloat(item.unitCost)||0;
+            const disc=parseFloat(item.disc)||0, gst=parseFloat(item.gst)||0;
+            const base=qty*uc*(1-disc/100), total=base*(1+gst/100);
+            return `<tr>
+              <td class="item-num">${i+1}.</td>
+              <td class="desc">${(item.desc||'').replace(/\n/g,'<br>')}</td>
+              <td>${item.hsn||''}</td>
+              <td class="right">${item.qty||''}</td>
+              <td>${item.unit||''}</td>
+              <td class="right">${uc?uc.toLocaleString('en-IN',{minimumFractionDigits:2}):'—'}</td>
+              <td class="right">${item.disc||0}%</td>
+              <td class="right">${item.gst||0}%</td>
+              <td class="right total-cell">${total?total.toLocaleString('en-IN',{minimumFractionDigits:2}):'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOTALS -->
+    <div class="pdf-totals">
+      <div class="pdf-totals-box">
+        <div class="totals-row subtotal"><strong>Sub Total</strong><span>${fmt(totals.subtotal)}</span></div>
+        ${gstRows}
+        <div class="totals-row grand"><span>Grand Total</span><span>${fmt(totals.grand)}</span></div>
+      </div>
+    </div>
+
+    <!-- NOTES & TERMS -->
+    <div class="pdf-notes-terms">
+      <div class="pdf-notes">
+        <h4>Notes & Scope</h4>
+        <ul>${notes.length ? notes.map(n=>`<li>${n}</li>`).join('') : '<li style="color:#9CA3AF;font-style:italic">No notes added</li>'}</ul>
+      </div>
+      <div class="pdf-terms">
+        <h4>Terms & Conditions</h4>
+        <table>
+          <tr><td>Price</td><td>As per above offer</td></tr>
+          <tr><td>Sales Tax</td><td>GST @ 18% extra</td></tr>
+          <tr><td>Packing & Forwarding</td><td>${g('tPacking')}</td></tr>
+          <tr><td>Freight</td><td>${g('tFreight')}</td></tr>
+          <tr><td>Delivery</td><td>${g('tDelivery')}</td></tr>
+          <tr><td>Payment</td><td>${g('tPayment')}</td></tr>
+          <tr><td>Validity</td><td>${g('tValidity')}</td></tr>
+          <tr><td>Warranty</td><td>${g('tWarranty')}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="pdf-footer">
+      <div class="pdf-footer-left">
+        ${g('footerMsg') || 'We assure you our prompt attention to all your requirements.'}
+      </div>
+      <div class="pdf-footer-right">
+        <p>For SNB Engg.</p>
+        <div class="pdf-sig-line"></div>
+        <span>Authorised Signatory</span>
+      </div>
+    </div>
+  `;
+}
+
+// ── Download PDF ──────────────────────────────────────────────────────────────
+function downloadPDF() {
+  window.print();
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetForm() {
+  if (!confirm('Reset all fields?')) return;
+  document.querySelectorAll('input,textarea').forEach(el => {
+    if (el.id === 'quoteDate') {
+      el.value = new Date().toISOString().split('T')[0];
+    } else if (['tPacking','tFreight','tDelivery','tPayment','tValidity','tWarranty'].includes(el.id)) {
+      // keep defaults
+    } else {
+      el.value = '';
+    }
+  });
+  document.getElementById('quoteNo').value = 'SNB/Q/2026-06/001';
+  items = [{desc:'', hsn:'', qty:'1', unit:'Nos', unitCost:'', disc:'0', gst:'18'}];
+  renderItemRows();
+  render();
+}
+</script>
+</body>
+</html>
