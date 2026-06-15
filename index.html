@@ -53,7 +53,7 @@ body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-he
 /* preview */
 .preview-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .preview-toolbar h2{font-size:13px;font-weight:600;color:var(--gray)}
-.pdf-page{background:var(--white);width:794px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.15);font-family:var(--body);padding-bottom:20px}
+.pdf-page{background:var(--white);width:794px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.15);font-family:var(--body);padding-bottom:20px;overflow:hidden}
 
 /* ══ QUOTATION PDF STYLES ══ */
 .q-header{border:1.5px solid var(--dark);margin:8px;border-bottom:none}
@@ -118,10 +118,26 @@ body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-he
   .pdf-page{transform:scale(0.9);transform-origin:top center}
 }
 @media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{width:210mm;height:auto;background:white;overflow:visible}
   .form-panel,.preview-toolbar,.actions{display:none !important}
-  .preview-panel{padding:0;background:white}
-  .pdf-page{box-shadow:none;width:210mm;margin:0;transform:none !important}
-  body{background:white}
+  .app{display:block !important}
+  .preview-panel{padding:0;background:white;overflow:visible;min-height:unset}
+  .pdf-page{
+    box-shadow:none;
+    width:210mm;
+    min-height:auto;
+    margin:0;
+    padding-bottom:0;
+    transform:none !important;
+    page-break-after:auto;
+    overflow:visible;
+  }
+  /* prevent any section from being clipped */
+  .q-header,.q-addresses,.q-items,.q-bottom,.q-nt,.q-footer,.q-eoae{
+    page-break-inside:avoid;
+    overflow:visible;
+  }
 }
 </style>
 </head>
