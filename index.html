@@ -134,9 +134,23 @@ body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-he
     overflow:visible;
   }
   /* prevent any section from being clipped */
-  .q-header,.q-addresses,.q-items,.q-bottom,.q-nt,.q-footer,.q-eoae{
+  .q-header,.q-addresses,.q-bottom,.q-nt,.q-footer,.q-eoae{
     page-break-inside:avoid;
     overflow:visible;
+  }
+  /* items table can be long; let it flow across pages instead of being clipped */
+  .q-items{
+    overflow:visible;
+  }
+  .q-tbl{
+    page-break-inside:auto;
+  }
+  .q-tbl thead{
+    display:table-header-group;
+  }
+  .q-tbl tr{
+    page-break-inside:avoid;
+    page-break-after:auto;
   }
 }
 </style>
