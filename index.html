@@ -62,7 +62,7 @@ body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-he
 .q-company{padding:8px 12px;text-align:center}
 .q-company h1{font-family:var(--display);font-size:26px;font-weight:800;color:var(--red);letter-spacing:0.06em;line-height:1}
 .q-company p{font-size:9px;color:var(--dark);line-height:1.6;margin-top:4px}
-.q-copies{border-left:1px solid var(--dark);padding:8px 12px;min-width:170px}
+.q-copies{border-left:1px solid var(--dark);padding:8px 12px;min-width:220px}
 .q-copy-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:9px;color:var(--dark)}
 .q-copy-dot{width:11px;height:11px;border:1.5px solid var(--dark);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;color:var(--red);flex-shrink:0}
 .q-title-row{border-bottom:1.5px solid var(--dark);display:flex;justify-content:space-between;align-items:center;padding:5px 12px}
@@ -367,12 +367,7 @@ function render(){
           <p>${SNB_ADDR.join('<br>')}</p>
           <p style="margin-top:3px"><strong>Mob: ${SNB_PHONE}</strong> &nbsp;|&nbsp; <strong>GSTN: ${GSTIN}</strong></p>
         </div>
-        <div class="q-copies">
-          <div style="font-size:8px;color:var(--gray);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Copies</div>
-          <div class="q-copy-row"><div class="q-copy-dot">✓</div> Original for Recipient</div>
-          <div class="q-copy-row"><div class="q-copy-dot">✓</div> Duplicate for Supplier/Transporter</div>
-          <div class="q-copy-row"><div class="q-copy-dot">✓</div> Triplicate for Supplier</div>
-        </div>
+        <div class="q-copies"></div>
       </div>
       <!-- TITLE -->
       <div class="q-title-row">
