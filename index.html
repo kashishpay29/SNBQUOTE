@@ -82,7 +82,6 @@ body{font-family:var(--body);background:var(--offwhite);color:var(--dark);min-he
 .q-items{margin:0 8px}
 .q-tbl{width:100%;border-collapse:collapse;border:1.5px solid var(--dark);font-size:9.5px;table-layout:fixed}
 .q-tbl th{padding:5px 4px;background:var(--dark);color:var(--white);font-size:8.5px;font-weight:700;text-align:center;border:1px solid #374151;white-space:nowrap;overflow:hidden}
-.q-tbl th.sub{background:#374151;font-size:8px}
 .q-tbl td{padding:4px 4px;border:1px solid var(--lgray);color:var(--dark);vertical-align:top}
 .q-tbl td.c{text-align:center}
 .q-tbl td.r{text-align:right}
@@ -269,7 +268,8 @@ const SVG_LOGO = `<svg width="108" height="108" viewBox="0 0 108 108" xmlns="htt
   <text x="54" y="96" font-family="Georgia,serif" font-size="8.5" font-weight="bold" letter-spacing="3.5" fill="#ffffff" text-anchor="middle">SNB ENGG</text>
 </svg>`;
 
-let items = [{desc:'',hsn:'',unit:'NOS',qty:'1',rate:'',cgst:'0',sgst:'0',igst:'18'}];
+const GST_RATE = 18;
+let items = [{desc:'',qty:'1',rate:''}];
 
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('quoteDate').value=new Date().toISOString().split('T')[0];
@@ -277,7 +277,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 
 function addItem(){
-  items.push({desc:'',hsn:'',unit:'NOS',qty:'1',rate:'',cgst:'0',sgst:'0',igst:'18'});
+  items.push({desc:'',qty:'1',rate:''});
   renderItemRows();render();
 }
 function removeItem(i){if(items.length===1)return;items.splice(i,1);renderItemRows();render();}
@@ -288,22 +288,16 @@ function renderItemRows(){
       <div class="item-card-top">
         <div class="item-num">${i+1}</div>
         <div class="mini-field">
-          <label>Name of Product / Service</label>
+          <label>Name of the Product</label>
           <textarea oninput="ui(${i},'desc',this.value)">${item.desc}</textarea>
         </div>
         <button class="item-del" onclick="removeItem(${i})" title="Remove item">×</button>
       </div>
       <div class="item-card-grid">
-        <div class="mini-field"><label>HSN/SAC</label><input value="${item.hsn}" placeholder="HSN" oninput="ui(${i},'hsn',this.value)"></div>
-        <div class="mini-field"><label>UOM</label><input value="${item.unit}" placeholder="NOS" oninput="ui(${i},'unit',this.value)"></div>
         <div class="mini-field"><label>Qty</label><input type="number" value="${item.qty}" oninput="ui(${i},'qty',this.value)"></div>
         <div class="mini-field"><label>Rate (₹)</label><input type="number" value="${item.rate}" placeholder="0.00" oninput="ui(${i},'rate',this.value)"></div>
-        <div class="mini-field"><label>CGST %</label><input type="number" value="${item.cgst}" placeholder="0" oninput="ui(${i},'cgst',this.value)"></div>
-        <div class="mini-field readout"><label>CGST Amt</label><div class="item-calc" id="icg-${i}">${fmtC(base(item)*(parseFloat(item.cgst)||0)/100)}</div></div>
-        <div class="mini-field"><label>SGST %</label><input type="number" value="${item.sgst}" placeholder="0" oninput="ui(${i},'sgst',this.value)"></div>
-        <div class="mini-field readout"><label>SGST Amt</label><div class="item-calc" id="isg-${i}">${fmtC(base(item)*(parseFloat(item.sgst)||0)/100)}</div></div>
-        <div class="mini-field"><label>IGST %</label><input type="number" value="${item.igst}" placeholder="18" oninput="ui(${i},'igst',this.value)"></div>
-        <div class="mini-field readout"><label>IGST Amt</label><div class="item-calc" id="iig-${i}">${fmtC(base(item)*(parseFloat(item.igst)||0)/100)}</div></div>
+        <div class="mini-field readout"><label>Amt (₹)</label><div class="item-calc" id="iamt-${i}">${fmtC(base(item))}</div></div>
+        <div class="mini-field readout"><label>GST (18%)</label><div class="item-calc" id="igst-${i}">${fmtC(gst(item))}</div></div>
         <div class="mini-field readout total"><label>Total (₹)</label><div class="item-calc" id="itot-${i}">${fmtC(total(item))}</div></div>
       </div>
     </div>`).join('');
@@ -312,35 +306,29 @@ function renderItemRows(){
 function ui(i,f,v){
   items[i][f]=v;
   const b=base(items[i]);
-  const cg=b*(parseFloat(items[i].cgst)||0)/100;
-  const sg=b*(parseFloat(items[i].sgst)||0)/100;
-  const ig=b*(parseFloat(items[i].igst)||0)/100;
+  const gs=gst(items[i]);
   const el=id=>document.getElementById(id);
-  if(el('icg-'+i)) el('icg-'+i).textContent=fmtC(cg);
-  if(el('isg-'+i)) el('isg-'+i).textContent=fmtC(sg);
-  if(el('iig-'+i)) el('iig-'+i).textContent=fmtC(ig);
-  if(el('itot-'+i)) el('itot-'+i).textContent=fmtC(b+cg+sg+ig);
+  if(el('iamt-'+i)) el('iamt-'+i).textContent=fmtC(b);
+  if(el('igst-'+i)) el('igst-'+i).textContent=fmtC(gs);
+  if(el('itot-'+i)) el('itot-'+i).textContent=fmtC(b+gs);
   render();
 }
 
 function base(item){return (parseFloat(item.qty)||0)*(parseFloat(item.rate)||0);}
-function total(item){
-  const b=base(item);
-  return b+b*((parseFloat(item.cgst)||0)+(parseFloat(item.sgst)||0)+(parseFloat(item.igst)||0))/100;
-}
+function gst(item){return base(item)*GST_RATE/100;}
+function total(item){return base(item)+gst(item);}
 function fmtC(n){return n?n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'';}
 function fmt(n,dec=2){return n.toLocaleString('en-IN',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
 function fmtDate(d){if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}-${m}-${y}`;}
 function g(id){return document.getElementById(id)?.value||'';}
 
 function calcTotals(){
-  let sub=0,cg=0,sg=0,ig=0;
+  let sub=0,gstTotal=0;
   items.forEach(item=>{
-    const b=base(item);
-    sub+=b;cg+=b*(parseFloat(item.cgst)||0)/100;
-    sg+=b*(parseFloat(item.sgst)||0)/100;ig+=b*(parseFloat(item.igst)||0)/100;
+    sub+=base(item);
+    gstTotal+=gst(item);
   });
-  return{sub,cg,sg,ig,tax:cg+sg+ig,grand:sub+cg+sg+ig};
+  return{sub,gst:gstTotal,grand:sub+gstTotal};
 }
 
 function numToWords(n){
@@ -403,65 +391,39 @@ function render(){
     <div class="q-items">
       <table class="q-tbl">
         <colgroup>
-          <col style="width:26px"><col><col style="width:56px">
-          <col style="width:36px"><col style="width:34px"><col style="width:60px">
-          <col style="width:62px">
-          <col style="width:34px"><col style="width:52px">
-          <col style="width:34px"><col style="width:52px">
-          <col style="width:34px"><col style="width:52px">
-          <col style="width:66px">
+          <col style="width:30px"><col>
+          <col style="width:50px"><col style="width:74px">
+          <col style="width:84px"><col style="width:84px">
+          <col style="width:88px">
         </colgroup>
         <thead>
           <tr>
-            <th rowspan="2">#</th>
-            <th rowspan="2" style="text-align:left">Name of Product / Service</th>
-            <th rowspan="2">HSN / SAC</th>
-            <th rowspan="2">UOM</th>
-            <th rowspan="2">Qty</th>
-            <th rowspan="2">Rate (₹)</th>
-            <th rowspan="2">Amount (₹)</th>
-            <th colspan="2" class="sub">CGST</th>
-            <th colspan="2" class="sub">SGST</th>
-            <th colspan="2" class="sub">IGST</th>
-            <th rowspan="2">Total (₹)</th>
-          </tr>
-          <tr>
-            <th class="sub">Rate%</th><th class="sub">Amt</th>
-            <th class="sub">Rate%</th><th class="sub">Amt</th>
-            <th class="sub">Rate%</th><th class="sub">Amt</th>
+            <th>#</th>
+            <th style="text-align:left">Name of the Product</th>
+            <th>Qty</th>
+            <th>Rate (₹)</th>
+            <th>Amt (₹)</th>
+            <th>GST (18%)</th>
+            <th>Total (₹)</th>
           </tr>
         </thead>
         <tbody>
           ${items.map((item,i)=>{
-            const b=base(item),r=parseFloat(item.rate)||0;
-            const cg=b*(parseFloat(item.cgst)||0)/100;
-            const sg=b*(parseFloat(item.sgst)||0)/100;
-            const ig=b*(parseFloat(item.igst)||0)/100;
-            const tot=b+cg+sg+ig;
+            const b=base(item),r=parseFloat(item.rate)||0,gs=gst(item),tot=total(item);
             return`<tr>
               <td class="c b">${i+1}</td>
               <td class="desc">${(item.desc||'—').replace(/\n/g,'<br>')}</td>
-              <td class="c">${item.hsn||''}</td>
-              <td class="c">${item.unit||''}</td>
               <td class="c">${item.qty||''}</td>
               <td class="r">${r?fmt(r):'—'}</td>
               <td class="r">${b?fmt(b):'—'}</td>
-              <td class="c">${item.cgst||0}%</td>
-              <td class="r">${cg?fmt(cg):'—'}</td>
-              <td class="c">${item.sgst||0}%</td>
-              <td class="r">${sg?fmt(sg):'—'}</td>
-              <td class="c">${item.igst||0}%</td>
-              <td class="r">${ig?fmt(ig):'—'}</td>
+              <td class="r">${gs?fmt(gs):'—'}</td>
               <td class="r b">${tot?fmt(tot):'—'}</td>
             </tr>`;
           }).join('')}
           <tr class="grand">
-            <td colspan="2" class="b">Grand Total</td>
-            <td></td><td></td><td></td><td></td>
+            <td colspan="4" class="b">Grand Total</td>
             <td class="r b">${T.sub?fmt(T.sub):''}</td>
-            <td></td><td class="r b">${T.cg?fmt(T.cg):''}</td>
-            <td></td><td class="r b">${T.sg?fmt(T.sg):''}</td>
-            <td></td><td class="r b">${T.ig?fmt(T.ig):''}</td>
+            <td class="r b">${T.gst?fmt(T.gst):''}</td>
             <td class="r b" style="color:var(--red);font-size:9.5px">${T.grand?fmt(T.grand):''}</td>
           </tr>
         </tbody>
@@ -485,10 +447,7 @@ function render(){
       </div>
       <div class="q-bottom-right">
         <div class="q-tax-row"><span>Total Amount Before Tax</span><span>₹ ${fmt(T.sub)}</span></div>
-        ${T.cg?`<div class="q-tax-row"><span>Add: CGST</span><span>₹ ${fmt(T.cg)}</span></div>`:''}
-        ${T.sg?`<div class="q-tax-row"><span>Add: SGST</span><span>₹ ${fmt(T.sg)}</span></div>`:''}
-        ${T.ig?`<div class="q-tax-row"><span>Add: IGST</span><span>₹ ${fmt(T.ig)}</span></div>`:''}
-        <div class="q-tax-row"><span>Tax Amount (GST)</span><span>₹ ${fmt(T.tax)}</span></div>
+        <div class="q-tax-row"><span>Add: GST (18%)</span><span>₹ ${fmt(T.gst)}</span></div>
         <div class="q-tax-row grand"><span><strong>Total Amount After Tax</strong></span><span><strong>₹ ${fmt(T.grand)}</strong></span></div>
       </div>
     </div>
@@ -539,7 +498,7 @@ function resetForm(){
     el.value=d[el.id]||'';
   });
   document.getElementById('quoteDate').value=new Date().toISOString().split('T')[0];
-  items=[{desc:'',hsn:'',unit:'NOS',qty:'1',rate:'',cgst:'0',sgst:'0',igst:'18'}];
+  items=[{desc:'',qty:'1',rate:''}];
   renderItemRows();render();
 }
 </script>
